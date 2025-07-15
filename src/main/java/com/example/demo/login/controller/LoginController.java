@@ -1,4 +1,7 @@
-package com.example.demo;
+package com.example.demo.login.controller;
+
+import com.example.demo.login.service.LoginService;
+import com.example.demo.user.User;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

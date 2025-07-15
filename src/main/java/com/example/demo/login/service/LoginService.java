@@ -1,5 +1,7 @@
-package com.example.demo;
+package com.example.demo.login.service;
 
+import com.example.demo.user.User;
+import com.example.demo.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import java.util.Optional;
 
