@@ -5,6 +5,7 @@ import lombok.Getter;
 
 @Getter
 @Entity
+@Table(name = "userTable")
 public class User {
     @Id
     private String empNo;
