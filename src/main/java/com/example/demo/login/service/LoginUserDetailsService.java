@@ -3,12 +3,14 @@ package com.example.demo.login.service;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
 
 import com.example.demo.login.LoginUserAuthority;
 import com.example.demo.login.LoginUserDetails;
 import com.example.demo.user.User;
 import com.example.demo.user.repository.UserRepository;
 
+@Service
 public class LoginUserDetailsService implements UserDetailsService{
 
     private final UserRepository userRepository;
