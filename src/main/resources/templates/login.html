@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>로그인</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 400px;
+        }
+        .login-title {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .login-btn:hover {
+            background-color: #0056b3;
+        }
+        .error-message {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .success-message {
+            color: green;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .token-display {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 20px;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2 class="login-title">로그인</h2>
+        
+        <div th:if="${param.error}" class="error-message">
+            로그인에 실패했습니다.
+        </div>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">사번</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">생년월일 (YYYYMMDD)</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <button type="submit" class="login-btn">로그인</button>
+        </form>
+        
+        <div id="result" style="display: none;">
+            <div id="successMessage" class="success-message"></div>
+            <div id="tokenDisplay" class="token-display"></div>
+        </div>
+        
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
+            })
+            .then(response => {
+                if (200 !== response.status) {
+                    alert('Login failed'); // 로그인 실패 시 경고창 표시
+                    throw new Error('Login failed');
+                }
+
+                return response.headers.get("location");
+            })
+            .then(location => {
+                window.location.href = location;
+            })
+            .catch(error => {
+                document.getElementById('errorMessage').textContent = '로그인 중 오류가 발생했습니다.';
+                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('result').style.display = 'none';
+            });
+        });
+    </script>
+</body>
+</html> 
