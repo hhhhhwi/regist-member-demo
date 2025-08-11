@@ -25,6 +25,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
     }
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getRequestURI();
+        // 로그인, 회원가입 등은 JWT 필터를 적용하지 않음
+        return path.equals("/login") || path.startsWith("/h2-console");
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         String token = getTokenFromRequest(request);
