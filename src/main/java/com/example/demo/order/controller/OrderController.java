@@ -2,7 +2,10 @@ package com.example.demo.order.controller;
 
 import com.example.demo.order.OrderSession;
 import com.example.demo.order.dto.CustomerInfoDto;
+import com.example.demo.order.dto.ModelSelectionDto;
 import com.example.demo.order.service.OrderService;
+import com.example.demo.product.Product;
+import com.example.demo.product.service.ProductService;
 import com.example.demo.user.User;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,6 +17,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 @Controller
@@ -21,9 +26,11 @@ import java.util.Optional;
 public class OrderController {
     
     private final OrderService orderService;
+    private final ProductService productService;
     
-    public OrderController(OrderService orderService) {
+    public OrderController(OrderService orderService, ProductService productService) {
         this.orderService = orderService;
+        this.productService = productService;
     }
     
     /**
@@ -113,6 +120,139 @@ public class OrderController {
             redirectAttributes.addFlashAttribute("error", "고객 정보 저장 중 오류가 발생했습니다: " + e.getMessage());
             model.addAttribute("teacher", currentTeacher);
             return "order/step1";
+        }
+    }
+    
+    /**
+     * 2단계: 모델 선택 페이지
+     */
+    @GetMapping("/step2")
+    public String step2(Model model, HttpSession httpSession, RedirectAttributes redirectAttributes) {
+        // 현재 로그인한 교사 정보 가져오기
+        User currentTeacher = getCurrentTeacher();
+        if (currentTeacher == null) {
+            return "redirect:/login";
+        }
+        
+        // 세션 ID 확인
+        String sessionId = (String) httpSession.getAttribute("orderSessionId");
+        if (sessionId == null) {
+            redirectAttributes.addFlashAttribute("error", "세션이 만료되었습니다. 1단계부터 다시 시작해주세요.");
+            return "redirect:/order/step1";
+        }
+        
+        // 주문 세션 조회
+        Optional<OrderSession> orderSessionOpt = orderService.getOrderSession(sessionId, currentTeacher.getEmpNo());
+        if (orderSessionOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "주문 세션을 찾을 수 없습니다. 1단계부터 다시 시작해주세요.");
+            return "redirect:/order/step1";
+        }
+        
+        OrderSession orderSession = orderSessionOpt.get();
+        
+        // 1단계 완료 여부 확인
+        if (orderSession.getCustomerInfo() == null) {
+            redirectAttributes.addFlashAttribute("error", "고객 정보를 먼저 입력해주세요.");
+            return "redirect:/order/step1";
+        }
+        
+        // 기존 모델 선택 정보가 있는지 확인
+        ModelSelectionDto modelSelectionDto = new ModelSelectionDto();
+        if (orderSession.getSelectedGrade() != null) {
+            modelSelectionDto.setGrade(orderSession.getSelectedGrade());
+            modelSelectionDto.setManagementType(orderSession.getSelectedManagementType());
+            modelSelectionDto.setPadType(orderSession.getSelectedPadType());
+            modelSelectionDto.setProductId(orderSession.getSelectedProductId());
+            modelSelectionDto.setQuantity(orderSession.getQuantity());
+        }
+        
+        // 학년 옵션 조회
+        List<String> gradeOptions = productService.getGradeOptions();
+        
+        // 관리 유형 옵션 조회
+        List<String> managementTypes = productService.getManagementTypes();
+        
+        // 교사가 접근 가능한 패드 종류 조회
+        List<String> padTypes = productService.getPadTypesByTeacher(currentTeacher);
+        
+        model.addAttribute("modelSelection", modelSelectionDto);
+        model.addAttribute("gradeOptions", gradeOptions);
+        model.addAttribute("managementTypes", managementTypes);
+        model.addAttribute("padTypes", padTypes);
+        model.addAttribute("teacher", currentTeacher);
+        model.addAttribute("customerInfo", orderSession.getCustomerInfo());
+        
+        return "order/step2";
+    }
+    
+    /**
+     * 2단계: 모델 선택 정보 저장
+     */
+    @PostMapping("/step2")
+    public String saveStep2(@Valid @ModelAttribute("modelSelection") ModelSelectionDto modelSelectionDto,
+                           BindingResult bindingResult,
+                           HttpSession httpSession,
+                           RedirectAttributes redirectAttributes,
+                           Model model) {
+        
+        // 현재 로그인한 교사 정보 가져오기
+        User currentTeacher = getCurrentTeacher();
+        if (currentTeacher == null) {
+            return "redirect:/login";
+        }
+        
+        // 세션 ID 확인
+        String sessionId = (String) httpSession.getAttribute("orderSessionId");
+        if (sessionId == null) {
+            redirectAttributes.addFlashAttribute("error", "세션이 만료되었습니다. 1단계부터 다시 시작해주세요.");
+            return "redirect:/order/step1";
+        }
+        
+        // 유효성 검사 실패 시
+        if (bindingResult.hasErrors()) {
+            // 필요한 데이터 다시 로드
+            List<String> gradeOptions = productService.getGradeOptions();
+            List<String> managementTypes = productService.getManagementTypes();
+            List<String> padTypes = productService.getPadTypesByTeacher(currentTeacher);
+            
+            model.addAttribute("gradeOptions", gradeOptions);
+            model.addAttribute("managementTypes", managementTypes);
+            model.addAttribute("padTypes", padTypes);
+            model.addAttribute("teacher", currentTeacher);
+            
+            return "order/step2";
+        }
+        
+        try {
+            // 선택된 상품 정보 확인
+            Optional<Product> productOpt = productService.findById(modelSelectionDto.getProductId());
+            if (productOpt.isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", "선택된 모델을 찾을 수 없습니다.");
+                return "redirect:/order/step2";
+            }
+            
+            Product selectedProduct = productOpt.get();
+            
+            // 교사의 상품 접근 권한 확인
+            if (!productService.isProductAccessible(currentTeacher, selectedProduct)) {
+                redirectAttributes.addFlashAttribute("error", "선택하신 모델에 대한 접근 권한이 없습니다.");
+                return "redirect:/order/step2";
+            }
+            
+            // 모델 선택 정보 저장
+            orderService.saveModelSelection(sessionId, currentTeacher.getEmpNo(),
+                    modelSelectionDto.getGrade(),
+                    modelSelectionDto.getManagementType(),
+                    modelSelectionDto.getPadType(),
+                    modelSelectionDto.getProductId(),
+                    modelSelectionDto.getQuantity());
+            
+            redirectAttributes.addFlashAttribute("success", "모델 선택 정보가 저장되었습니다.");
+            return "redirect:/order/step3";
+            
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "모델 선택 정보 저장 중 오류가 발생했습니다: " + e.getMessage());
+            return "redirect:/order/step2";
         }
     }
     

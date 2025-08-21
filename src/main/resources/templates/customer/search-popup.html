@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>고객 검색</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 15px;
+        }
+        .search-form {
+            margin-bottom: 20px;
+        }
+        .form-row {
+            display: flex;
+            gap: 10px;
+            align-items: end;
+        }
+        .form-group {
+            flex: 1;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: bold;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0,123,255,0.3);
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .search-results {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .customer-item {
+            padding: 15px;
+            border-bottom: 1px solid #dee2e6;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .customer-item:last-child {
+            border-bottom: none;
+        }
+        .customer-item:hover {
+            background-color: #f8f9fa;
+        }
+        .customer-info {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        .customer-details {
+            font-size: 12px;
+            color: #6c757d;
+            line-height: 1.4;
+        }
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #007bff;
+        }
+        .button-group {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .error-message {
+            color: #dc3545;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>고객 검색</h2>
+            <p style="color: #6c757d; font-size: 14px; margin: 0;">
+                부모 이름, 자녀 이름, 또는 연락처로 검색할 수 있습니다.
+            </p>
+        </div>
+
+        <div class="search-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="searchKeyword">검색어</label>
+                    <input type="text" id="searchKeyword" 
+                           placeholder="부모 이름, 자녀 이름, 또는 연락처를 입력하세요"
+                           autocomplete="off">
+                </div>
+                <div class="form-group" style="flex: 0 0 auto;">
+                    <button type="button" class="btn btn-primary" onclick="searchCustomers()">
+                        검색
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+        <div id="searchResults" class="search-results">
+            <div class="no-results">
+                검색어를 입력하고 검색 버튼을 클릭하세요.
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button type="button" class="btn btn-secondary" onclick="window.close()">
+                닫기
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 페이지 로드 시 검색어 입력란에 포커스
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('searchKeyword').focus();
+        });
+
+        // Enter 키로 검색 실행
+        document.getElementById('searchKeyword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchCustomers();
+            }
+        });
+
+        // 에러 메시지 표시
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+
+        // 에러 메시지 숨기기
+        function hideError() {
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        // 고객 검색 함수
+        function searchCustomers() {
+            const keyword = document.getElementById('searchKeyword').value.trim();
+            
+            // 에러 메시지 숨기기
+            hideError();
+            
+            if (!keyword) {
+                showError('검색어를 입력해주세요.');
+                document.getElementById('searchKeyword').focus();
+                return;
+            }
+
+            if (keyword.length < 2) {
+                showError('검색어는 2글자 이상 입력해주세요.');
+                return;
+            }
+            
+            // 검색 중 표시
+            document.getElementById('searchResults').innerHTML = 
+                '<div class="loading">검색 중...</div>';
+            
+            // FormData 사용하여 POST 요청
+            const formData = new FormData();
+            formData.append('keyword', keyword);
+            
+            fetch('/customer/search', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('검색 요청이 실패했습니다.');
+                }
+                return response.json();
+            })
+            .then(data => {
+                displaySearchResults(data);
+            })
+            .catch(error => {
+                console.error('검색 오류:', error);
+                showError('검색 중 오류가 발생했습니다. 다시 시도해주세요.');
+                document.getElementById('searchResults').innerHTML = 
+                    '<div class="no-results">검색 결과를 불러올 수 없습니다.</div>';
+            });
+        }
+        
+        // 검색 결과 표시
+        function displaySearchResults(customers) {
+            const resultsContainer = document.getElementById('searchResults');
+            
+            if (!customers || customers.length === 0) {
+                resultsContainer.innerHTML = 
+                    '<div class="no-results">검색 결과가 없습니다.<br>다른 검색어로 시도해보세요.</div>';
+                return;
+            }
+            
+            let html = '';
+            customers.forEach(customer => {
+                html += `
+                    <div class="customer-item" onclick="selectCustomer(${customer.id})" 
+                         title="클릭하여 선택">
+                        <div class="customer-info">
+                            부모: ${escapeHtml(customer.parentName)} | 자녀: ${escapeHtml(customer.childName)}
+                        </div>
+                        <div class="customer-details">
+                            연락처: ${escapeHtml(customer.parentPhone)}<br>
+                            학년: ${escapeHtml(customer.childGrade)} | 학교: ${escapeHtml(customer.school || '미입력')}<br>
+                            ${customer.address ? '주소: ' + escapeHtml(customer.address) : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resultsContainer.innerHTML = html;
+        }
+        
+        // HTML 이스케이프 함수
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // 고객 선택 함수
+        function selectCustomer(customerId) {
+            if (!customerId) {
+                showError('잘못된 고객 정보입니다.');
+                return;
+            }
+
+            // 선택된 고객 정보 조회
+            fetch(`/customer/detail/${customerId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('고객 정보 조회에 실패했습니다.');
+                }
+                return response.json();
+            })
+            .then(customer => {
+                // 부모 창에 고객 정보 전달
+                if (window.opener && !window.opener.closed) {
+                    // 부모 창의 함수 호출
+                    if (typeof window.opener.fillCustomerInfo === 'function') {
+                        window.opener.fillCustomerInfo(customer);
+                    } else {
+                        // 직접 폼 필드 채우기 (fallback)
+                        const parentDoc = window.opener.document;
+                        if (parentDoc.getElementById('parentName')) {
+                            parentDoc.getElementById('parentName').value = customer.parentName || '';
+                        }
+                        if (parentDoc.getElementById('parentPhone')) {
+                            parentDoc.getElementById('parentPhone').value = customer.parentPhone || '';
+                        }
+                        if (parentDoc.getElementById('parentEmail')) {
+                            parentDoc.getElementById('parentEmail').value = customer.parentEmail || '';
+                        }
+                        if (parentDoc.getElementById('address')) {
+                            parentDoc.getElementById('address').value = customer.address || '';
+                        }
+                        if (parentDoc.getElementById('childName')) {
+                            parentDoc.getElementById('childName').value = customer.childName || '';
+                        }
+                        if (parentDoc.getElementById('childGrade')) {
+                            parentDoc.getElementById('childGrade').value = customer.childGrade || '';
+                        }
+                        if (parentDoc.getElementById('school')) {
+                            parentDoc.getElementById('school').value = customer.school || '';
+                        }
+                    }
+                }
+                
+                // 팝업 창 닫기
+                window.close();
+            })
+            .catch(error => {
+                console.error('고객 정보 조회 오류:', error);
+                showError('고객 정보를 불러오는 중 오류가 발생했습니다.');
+            });
+        }
+
+        // 팝업 창이 닫힐 때 부모 창에 포커스
+        window.addEventListener('beforeunload', function() {
+            if (window.opener && !window.opener.closed) {
+                window.opener.focus();
+            }
+        });
+    </script>
+</body>
+</html>

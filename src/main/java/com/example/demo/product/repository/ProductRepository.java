@@ -46,4 +46,21 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      */
     @Query("SELECT DISTINCT p.padType FROM Product p WHERE p.active = true")
     List<String> findDistinctPadTypes();
+    
+    /**
+     * 조건별 상품 조회 (학년, 관리유형, 패드종류)
+     */
+    List<Product> findByGradeAndManagementTypeAndPadTypeAndActiveTrue(String grade, String managementType, String padType);
+    
+    /**
+     * 학년 목록 조회 (활성화된 상품만)
+     */
+    @Query("SELECT DISTINCT p.grade FROM Product p WHERE p.active = true ORDER BY p.grade")
+    List<String> findDistinctGrades();
+    
+    /**
+     * 관리 유형 목록 조회 (활성화된 상품만)
+     */
+    @Query("SELECT DISTINCT p.managementType FROM Product p WHERE p.active = true")
+    List<String> findDistinctManagementTypes();
 }

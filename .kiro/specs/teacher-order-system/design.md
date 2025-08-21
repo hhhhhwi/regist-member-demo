@@ -145,27 +145,6 @@ sequenceDiagram
 - `ProductRepository`: 상품 데이터 CRUD
 - `UserRepository`: 사용자(교사) 데이터 CRUD (기존)
 
-## 권한 관리 시스템
-
-### 교사 권한 분류
-기존 User 엔티티의 속성들을 활용하여 교사의 상품 접근 권한을 결정합니다:
-
-#### 높은 권한 (Premium Access)
-- **CntrTyCd**: CHRG, PRLSN
-- **부서코드**: 1501, 1502, 1505, 1601, 1602
-- **접근 가능**: 모든 상품 (일반 + 제한 상품)
-
-#### 중간 권한 (Advanced Access)  
-- **CntrTyCd**: CNSTN
-- **부서코드**: 1500, 1503, 1504, 1600
-- **접근 가능**: 일반 상품 + 일부 제한 상품
-
-#### 기본 권한 (Basic Access)
-- **CntrTyCd**: SPRT, UNTY
-- **부서코드**: 1506
-- **TeacType**: C (Center Director)
-- **접근 가능**: 일반 상품만
-
 ### 상품 접근 제어 로직
 ```java
 public boolean isProductAccessible(User teacher, Product product) {

@@ -26,6 +26,11 @@ public class ProductService {
      * 학년 옵션 조회
      */
     public List<String> getGradeOptions() {
+        // 데이터베이스에서 실제 학년 목록을 조회하거나 기본값 반환
+        List<String> dbGrades = productRepository.findDistinctGrades();
+        if (!dbGrades.isEmpty()) {
+            return dbGrades;
+        }
         return Arrays.asList("초1", "초2", "초3", "초4", "초5", "초6", "중1", "중2", "중3");
     }
     
@@ -33,6 +38,11 @@ public class ProductService {
      * 관리 유형 옵션 조회
      */
     public List<String> getManagementTypes() {
+        // 데이터베이스에서 실제 관리 유형 목록을 조회하거나 기본값 반환
+        List<String> dbManagementTypes = productRepository.findDistinctManagementTypes();
+        if (!dbManagementTypes.isEmpty()) {
+            return dbManagementTypes;
+        }
         return Arrays.asList("관리", "비관리");
     }
     
@@ -62,6 +72,23 @@ public class ProductService {
         }
         
         List<Product> allModels = productRepository.findByPadTypeAndActiveTrue(padType.trim());
+        
+        // 교사가 접근 가능한 모델만 필터링
+        return allModels.stream()
+                .filter(product -> isProductAccessible(teacher, product))
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * 조건별 모델 조회 (교사 권한 고려)
+     */
+    public List<Product> getModelsByConditions(User teacher, String grade, String managementType, String padType) {
+        if (teacher == null || grade == null || managementType == null || padType == null) {
+            return List.of();
+        }
+        
+        List<Product> allModels = productRepository.findByGradeAndManagementTypeAndPadTypeAndActiveTrue(
+                grade.trim(), managementType.trim(), padType.trim());
         
         // 교사가 접근 가능한 모델만 필터링
         return allModels.stream()

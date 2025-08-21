@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>주문 등록 - 1단계: 고객 등록</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 15px;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        .step {
+            padding: 10px 20px;
+            margin: 0 10px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        .step.active {
+            background-color: #007bff;
+            color: white;
+        }
+        .step.inactive {
+            background-color: #e9ecef;
+            color: #6c757d;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 10px;
+        }
+        .form-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        .form-group {
+            flex: 1;
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: bold;
+        }
+        .form-group label.required::after {
+            content: " *";
+            color: red;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0,123,255,0.3);
+        }
+        .error-message {
+            color: red;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+        .search-section {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .search-btn {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .search-btn:hover {
+            background-color: #218838;
+        }
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn:disabled {
+            background-color: #e9ecef;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>주문 등록</h1>
+            <div class="step-indicator">
+                <div class="step active">1. 고객 등록</div>
+                <div class="step inactive">2. 모델 선택</div>
+                <div class="step inactive">3. 주문 확인</div>
+            </div>
+        </div>
+
+        <div class="search-section">
+            <button type="button" class="search-btn" onclick="openCustomerSearch()">
+                기존 고객 검색
+            </button>
+            <p style="color: #6c757d; font-size: 14px; margin-top: 10px;">
+                기존 고객 정보가 있다면 검색하여 자동으로 입력할 수 있습니다.
+            </p>
+        </div>
+
+        <form id="customerForm" th:action="@{/order/step1}" method="post">
+            <!-- 부모 정보 섹션 -->
+            <div class="section">
+                <div class="section-title">부모 정보</div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="parentName" class="required">부모 이름</label>
+                        <input type="text" id="parentName" name="parentName" 
+                               th:value="${customerInfo?.parentName}" required>
+                        <div class="error-message" id="parentNameError"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="parentPhone" class="required">연락처</label>
+                        <input type="tel" id="parentPhone" name="parentPhone" 
+                               th:value="${customerInfo?.parentPhone}" 
+                               placeholder="010-1234-5678" required>
+                        <div class="error-message" id="parentPhoneError"></div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="parentEmail">이메일</label>
+                        <input type="email" id="parentEmail" name="parentEmail" 
+                               th:value="${customerInfo?.parentEmail}" 
+                               placeholder="example@email.com">
+                        <div class="error-message" id="parentEmailError"></div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="address" class="required">주소</label>
+                    <input type="text" id="address" name="address" 
+                           th:value="${customerInfo?.address}" required>
+                    <div class="error-message" id="addressError"></div>
+                </div>
+            </div>
+
+            <!-- 자녀 정보 섹션 -->
+            <div class="section">
+                <div class="section-title">자녀 정보</div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="childName" class="required">자녀 이름</label>
+                        <input type="text" id="childName" name="childName" 
+                               th:value="${customerInfo?.childName}" required>
+                        <div class="error-message" id="childNameError"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="childGrade" class="required">학년</label>
+                        <select id="childGrade" name="childGrade" required>
+                            <option value="">학년 선택</option>
+                            <option value="초1" th:selected="${customerInfo?.childGrade == '초1'}">초등학교 1학년</option>
+                            <option value="초2" th:selected="${customerInfo?.childGrade == '초2'}">초등학교 2학년</option>
+                            <option value="초3" th:selected="${customerInfo?.childGrade == '초3'}">초등학교 3학년</option>
+                            <option value="초4" th:selected="${customerInfo?.childGrade == '초4'}">초등학교 4학년</option>
+                            <option value="초5" th:selected="${customerInfo?.childGrade == '초5'}">초등학교 5학년</option>
+                            <option value="초6" th:selected="${customerInfo?.childGrade == '초6'}">초등학교 6학년</option>
+                            <option value="중1" th:selected="${customerInfo?.childGrade == '중1'}">중학교 1학년</option>
+                            <option value="중2" th:selected="${customerInfo?.childGrade == '중2'}">중학교 2학년</option>
+                            <option value="중3" th:selected="${customerInfo?.childGrade == '중3'}">중학교 3학년</option>
+                            <option value="고1" th:selected="${customerInfo?.childGrade == '고1'}">고등학교 1학년</option>
+                            <option value="고2" th:selected="${customerInfo?.childGrade == '고2'}">고등학교 2학년</option>
+                            <option value="고3" th:selected="${customerInfo?.childGrade == '고3'}">고등학교 3학년</option>
+                        </select>
+                        <div class="error-message" id="childGradeError"></div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="school" class="required">학교명</label>
+                    <input type="text" id="school" name="school" 
+                           th:value="${customerInfo?.school}" required>
+                    <div class="error-message" id="schoolError"></div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <a href="/order/list" class="btn btn-secondary">취소</a>
+                <button type="submit" class="btn btn-primary" id="nextBtn">다음 단계</button>
+            </div>
+        </form>
+    </div>
+
+
+
+    <script>
+        // 폼 유효성 검사
+        function validateForm() {
+            let isValid = true;
+            
+            // 필수 필드 검사
+            const requiredFields = [
+                { id: 'parentName', name: '부모 이름' },
+                { id: 'parentPhone', name: '연락처' },
+                { id: 'address', name: '주소' },
+                { id: 'childName', name: '자녀 이름' },
+                { id: 'childGrade', name: '학년' },
+                { id: 'school', name: '학교명' }
+            ];
+            
+            requiredFields.forEach(field => {
+                const element = document.getElementById(field.id);
+                const errorElement = document.getElementById(field.id + 'Error');
+                
+                if (!element.value.trim()) {
+                    errorElement.textContent = field.name + '을(를) 입력해주세요.';
+                    errorElement.style.display = 'block';
+                    element.style.borderColor = 'red';
+                    isValid = false;
+                } else {
+                    errorElement.style.display = 'none';
+                    element.style.borderColor = '#ddd';
+                }
+            });
+            
+            // 연락처 형식 검사
+            const phonePattern = /^010-\d{4}-\d{4}$/;
+            const phoneElement = document.getElementById('parentPhone');
+            const phoneErrorElement = document.getElementById('parentPhoneError');
+            
+            if (phoneElement.value && !phonePattern.test(phoneElement.value)) {
+                phoneErrorElement.textContent = '연락처는 010-1234-5678 형식으로 입력해주세요.';
+                phoneErrorElement.style.display = 'block';
+                phoneElement.style.borderColor = 'red';
+                isValid = false;
+            }
+            
+            // 이메일 형식 검사
+            const emailElement = document.getElementById('parentEmail');
+            const emailErrorElement = document.getElementById('parentEmailError');
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            
+            if (emailElement.value && !emailPattern.test(emailElement.value)) {
+                emailErrorElement.textContent = '올바른 이메일 형식을 입력해주세요.';
+                emailErrorElement.style.display = 'block';
+                emailElement.style.borderColor = 'red';
+                isValid = false;
+            }
+            
+            return isValid;
+        }
+        
+        // 실시간 유효성 검사
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                input.addEventListener('blur', function() {
+                    validateForm();
+                });
+                
+                // 연락처 자동 포맷팅
+                if (input.id === 'parentPhone') {
+                    input.addEventListener('input', function() {
+                        let value = this.value.replace(/[^0-9]/g, '');
+                        if (value.length >= 3 && value.length <= 7) {
+                            value = value.replace(/(\d{3})(\d{1,4})/, '$1-$2');
+                        } else if (value.length > 7) {
+                            value = value.replace(/(\d{3})(\d{4})(\d{1,4})/, '$1-$2-$3');
+                        }
+                        this.value = value;
+                    });
+                }
+            });
+        });
+        
+        // 폼 제출 처리
+        document.getElementById('customerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (validateForm()) {
+                this.submit();
+            }
+        });
+        
+        // 고객 검색 팝업 열기
+        function openCustomerSearch() {
+            const popup = window.open(
+                '/customer/search',
+                'customerSearch',
+                'width=700,height=600,scrollbars=yes,resizable=yes,location=no,menubar=no,toolbar=no'
+            );
+            
+            if (popup) {
+                popup.focus();
+            } else {
+                alert('팝업이 차단되었습니다. 팝업 차단을 해제하고 다시 시도해주세요.');
+            }
+        }
+        
+        // 팝업에서 호출되는 고객 정보 채우기 함수
+        function fillCustomerInfo(customer) {
+            if (!customer) return;
+            
+            // 폼에 고객 정보 자동 입력
+            document.getElementById('parentName').value = customer.parentName || '';
+            document.getElementById('parentPhone').value = customer.parentPhone || '';
+            document.getElementById('parentEmail').value = customer.parentEmail || '';
+            document.getElementById('address').value = customer.address || '';
+            document.getElementById('childName').value = customer.childName || '';
+            document.getElementById('childGrade').value = customer.childGrade || '';
+            document.getElementById('school').value = customer.school || '';
+            
+            // 유효성 검사 실행
+            validateForm();
+            
+            // 성공 메시지 표시 (선택사항)
+            const parentNameField = document.getElementById('parentName');
+            if (parentNameField) {
+                parentNameField.style.backgroundColor = '#d4edda';
+                setTimeout(() => {
+                    parentNameField.style.backgroundColor = '';
+                }, 2000);
+            }
+        }
+    </script>
+</body>
+</html>
