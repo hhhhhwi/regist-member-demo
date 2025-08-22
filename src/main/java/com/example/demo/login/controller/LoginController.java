@@ -34,7 +34,8 @@ public class LoginController {
 
     // 로그인 API (POST 요청)
     @PostMapping
-    public ResponseEntity<Void> login(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<Void> login(@RequestBody LoginRequest loginRequest, 
+                                     jakarta.servlet.http.HttpServletRequest request) {
         try {
             // 사용자 인증 (비밀번호 비교 포함)
             User user = loginService.authenticate(loginRequest.getUsername(), loginRequest.getPassword());
@@ -48,6 +49,11 @@ public class LoginController {
             // JWT 토큰 생성
             String token = jwtProvider.generateToken(user.getEmpNo(), authority);
             
+            // 세션에 사용자 정보 저장 (브라우저 호환성을 위해)
+            jakarta.servlet.http.HttpSession session = request.getSession(true);
+            session.setAttribute("empNo", user.getEmpNo());
+            session.setAttribute("authority", authority);
+            
             // 성공 시 200 상태코드와 함께 JWT 토큰과 사용자 정보 반환
             return ResponseEntity.ok()
                 .header("Authorization", "Bearer " + token)
@@ -55,6 +61,7 @@ public class LoginController {
                 .build();
 
         } catch (Exception e) {
+            System.out.println("Login failed with exception: " + e.getMessage());
             e.printStackTrace();
             // 실패 시 401 상태코드만 반환
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();

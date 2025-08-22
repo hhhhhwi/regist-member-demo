@@ -178,6 +178,16 @@ public class OrderService {
     }
     
     /**
+     * 교사 사번으로 주문 목록 조회
+     */
+    public List<Order> getOrdersByTeacher(String teacherEmpNo) {
+        if (teacherEmpNo == null || teacherEmpNo.trim().isEmpty()) {
+            throw new IllegalArgumentException("교사 사번이 필요합니다.");
+        }
+        return orderRepository.findByTeacherEmpNoOrderByCreatedAtDesc(teacherEmpNo);
+    }
+    
+    /**
      * 주문 상세 조회 (권한 확인)
      */
     public Optional<Order> getOrderDetail(Long orderId, User teacher) {

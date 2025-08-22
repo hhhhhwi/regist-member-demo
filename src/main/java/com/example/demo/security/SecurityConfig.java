@@ -36,7 +36,7 @@ public class SecurityConfig {
             )
             .headers(headers -> headers.frameOptions().sameOrigin())
             .formLogin(form -> form.disable()) // 폼 로그인 비활성화
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)) // 세션 사용 허용
             .addFilterBefore(new JwtAuthenticationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

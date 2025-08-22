@@ -17,12 +17,27 @@ public class LoginService {
     }
 
     public User authenticate(String username, String rawPassword) {
+        System.out.println("LoginService.authenticate called with username: " + username);
+        
         User user = userRepository.findById(username)
-            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+            .orElseThrow(() -> {
+                System.out.println("User not found: " + username);
+                return new RuntimeException("사용자를 찾을 수 없습니다.");
+            });
 
-        if (!passwordEncoder.matches(rawPassword, user.getBirthDate())) {
+        System.out.println("User found: " + user.getEmpNo());
+        System.out.println("Raw password: " + rawPassword);
+        System.out.println("Stored password (encrypted): " + user.getBirthDate());
+        
+        boolean passwordMatches = passwordEncoder.matches(rawPassword, user.getBirthDate());
+        System.out.println("Password matches: " + passwordMatches);
+        
+        if (!passwordMatches) {
+            System.out.println("Password authentication failed");
             throw new RuntimeException("비밀번호가 올바르지 않습니다.");
         }
+        
+        System.out.println("Authentication successful");
         return user;
     }
 } 

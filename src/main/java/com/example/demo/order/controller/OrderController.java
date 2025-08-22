@@ -17,26 +17,46 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
 @Controller
-@RequestMapping("/order")
 public class OrderController {
     
     private final OrderService orderService;
     private final ProductService productService;
+    private final com.example.demo.user.repository.UserRepository userRepository;
     
-    public OrderController(OrderService orderService, ProductService productService) {
+    public OrderController(OrderService orderService, ProductService productService, 
+                          com.example.demo.user.repository.UserRepository userRepository) {
         this.orderService = orderService;
         this.productService = productService;
+        this.userRepository = userRepository;
+    }
+    
+    /**
+     * 주문 목록 페이지 (메인 페이지)
+     */
+    @GetMapping("/orders")
+    public String orderList(Model model) {
+        User currentTeacher = getCurrentTeacher();
+        if (currentTeacher == null) {
+            return "redirect:/login";
+        }
+        
+        // 교사의 주문 목록 조회
+        List<com.example.demo.order.Order> orders = orderService.getOrdersByTeacher(currentTeacher.getEmpNo());
+        
+        model.addAttribute("orders", orders);
+        model.addAttribute("teacher", currentTeacher);
+        
+        return "order/list";
     }
     
     /**
      * 1단계: 고객 등록 페이지
      */
-    @GetMapping("/step1")
+    @GetMapping("/order/step1")
     public String step1(Model model, HttpSession httpSession) {
         // 현재 로그인한 교사 정보 가져오기
         User currentTeacher = getCurrentTeacher();
@@ -73,7 +93,7 @@ public class OrderController {
     /**
      * 1단계: 고객 정보 저장
      */
-    @PostMapping("/step1")
+    @PostMapping("/order/step1")
     public String saveStep1(@Valid @ModelAttribute("customerInfo") CustomerInfoDto customerInfoDto,
                            BindingResult bindingResult,
                            HttpSession httpSession,
@@ -126,7 +146,7 @@ public class OrderController {
     /**
      * 2단계: 모델 선택 페이지
      */
-    @GetMapping("/step2")
+    @GetMapping("/order/step2")
     public String step2(Model model, HttpSession httpSession, RedirectAttributes redirectAttributes) {
         // 현재 로그인한 교사 정보 가져오기
         User currentTeacher = getCurrentTeacher();
@@ -188,7 +208,7 @@ public class OrderController {
     /**
      * 2단계: 모델 선택 정보 저장
      */
-    @PostMapping("/step2")
+    @PostMapping("/order/step2")
     public String saveStep2(@Valid @ModelAttribute("modelSelection") ModelSelectionDto modelSelectionDto,
                            BindingResult bindingResult,
                            HttpSession httpSession,
@@ -259,7 +279,7 @@ public class OrderController {
     /**
      * 주문 취소 (세션 삭제)
      */
-    @PostMapping("/cancel")
+    @PostMapping("/order/cancel")
     public String cancelOrder(HttpSession httpSession, RedirectAttributes redirectAttributes) {
         User currentTeacher = getCurrentTeacher();
         if (currentTeacher != null) {
@@ -279,8 +299,9 @@ public class OrderController {
      */
     private User getCurrentTeacher() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof User) {
-            return (User) authentication.getPrincipal();
+        if (authentication != null && authentication.getPrincipal() instanceof String) {
+            String empNo = (String) authentication.getPrincipal();
+            return userRepository.findById(empNo).orElse(null);
         }
         return null;
     }

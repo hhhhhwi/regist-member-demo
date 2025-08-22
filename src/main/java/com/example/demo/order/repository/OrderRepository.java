@@ -53,4 +53,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * 교사별 주문 개수 조회
      */
     long countByTeacher(User teacher);
+    
+    /**
+     * 교사 사번으로 주문 목록 조회
+     */
+    @Query("SELECT o FROM Order o WHERE o.teacher.empNo = :teacherEmpNo ORDER BY o.createdAt DESC")
+    List<Order> findByTeacherEmpNoOrderByCreatedAtDesc(@Param("teacherEmpNo") String teacherEmpNo);
 }

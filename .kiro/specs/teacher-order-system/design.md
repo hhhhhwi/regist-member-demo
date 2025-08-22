@@ -93,14 +93,19 @@ sequenceDiagram
 #### OrderController
 - **역할**: 주문 관련 HTTP 요청 처리
 - **주요 메서드**:
+  - `GET /orders`: 주문 목록 조회 (메인 페이지)
   - `GET /order/step1`: 고객 등록 페이지
   - `POST /order/step1`: 고객 정보 임시 저장
   - `GET /order/step2`: 모델 선택 페이지
   - `POST /order/step2`: 모델 선택 정보 저장
   - `GET /order/step3`: 주문 확인 페이지
   - `POST /order/step3`: 최종 주문 등록
-  - `GET /order/list`: 주문 목록 조회
   - `GET /order/{id}`: 주문 상세 조회
+
+#### MainController
+- **역할**: 메인 페이지 라우팅
+- **주요 메서드**:
+  - `GET /`: 루트 경로에서 주문 목록으로 리다이렉트
 
 #### CustomerController
 - **역할**: 고객 검색 및 관리

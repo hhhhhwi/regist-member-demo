@@ -15,13 +15,16 @@ import java.util.List;
 @Controller
 @RequestMapping("/customer")
 public class CustomerController {
-    
+
     private final CustomerService customerService;
-    
-    public CustomerController(CustomerService customerService) {
+    private final com.example.demo.user.repository.UserRepository userRepository;
+
+    public CustomerController(CustomerService customerService,
+            com.example.demo.user.repository.UserRepository userRepository) {
         this.customerService = customerService;
+        this.userRepository = userRepository;
     }
-    
+
     /**
      * 고객 검색 팝업 페이지
      */
@@ -31,11 +34,11 @@ public class CustomerController {
         if (currentTeacher == null) {
             return "redirect:/login";
         }
-        
+
         model.addAttribute("teacher", currentTeacher);
         return "customer/search-popup";
     }
-    
+
     /**
      * 고객 검색 API (Ajax)
      */
@@ -44,9 +47,9 @@ public class CustomerController {
     public ResponseEntity<List<Customer>> searchCustomers(@RequestParam("keyword") String keyword) {
         User currentTeacher = getCurrentTeacher();
         if (currentTeacher == null) {
-            return ResponseEntity.unauthorized().build();
+            return ResponseEntity.status(401).build();
         }
-        
+
         try {
             List<Customer> customers = customerService.searchCustomers(keyword);
             return ResponseEntity.ok(customers);
@@ -54,7 +57,7 @@ public class CustomerController {
             return ResponseEntity.badRequest().build();
         }
     }
-    
+
     /**
      * 고객 상세 정보 조회 API (Ajax)
      */
@@ -63,9 +66,9 @@ public class CustomerController {
     public ResponseEntity<Customer> getCustomerDetail(@PathVariable Long id) {
         User currentTeacher = getCurrentTeacher();
         if (currentTeacher == null) {
-            return ResponseEntity.unauthorized().build();
+            return ResponseEntity.status(401).build();
         }
-        
+
         try {
             return customerService.findById(id)
                     .map(ResponseEntity::ok)
@@ -74,14 +77,15 @@ public class CustomerController {
             return ResponseEntity.badRequest().build();
         }
     }
-    
+
     /**
      * 현재 로그인한 교사 정보 가져오기
      */
     private User getCurrentTeacher() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof User) {
-            return (User) authentication.getPrincipal();
+        if (authentication != null && authentication.getPrincipal() instanceof String) {
+            String empNo = (String) authentication.getPrincipal();
+            return userRepository.findById(empNo).orElse(null);
         }
         return null;
     }

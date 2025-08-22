@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주문 목록 - 교사 주문 등록 시스템</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+        h1 {
+            color: #333;
+            margin: 0;
+        }
+        .teacher-info {
+            color: #666;
+            font-size: 14px;
+        }
+        .actions {
+            margin-bottom: 20px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .order-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .order-table th,
+        .order-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .order-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #333;
+        }
+        .order-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        .status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .status-confirmed {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-cancelled {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .empty-message {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .empty-message i {
+            font-size: 48px;
+            margin-bottom: 20px;
+            display: block;
+        }
+        .amount {
+            font-weight: bold;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>주문 목록</h1>
+                <div class="teacher-info" th:if="${teacher}">
+                    <span th:text="${teacher.empName}">교사명</span> 선생님 
+                    (<span th:text="${teacher.empNo}">사번</span>)
+                </div>
+            </div>
+            <div class="actions">
+                <a href="/order/step1" class="btn btn-primary">새 주문 등록</a>
+                <a href="/logout" class="btn btn-secondary">로그아웃</a>
+            </div>
+        </div>
+
+        <div th:if="${orders != null and !orders.empty}">
+            <table class="order-table">
+                <thead>
+                    <tr>
+                        <th>주문번호</th>
+                        <th>고객명</th>
+                        <th>자녀명</th>
+                        <th>상품명</th>
+                        <th>수량</th>
+                        <th>총액</th>
+                        <th>상태</th>
+                        <th>주문일시</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="order : ${orders}">
+                        <td th:text="${order.orderNumber}">ORD-001</td>
+                        <td th:text="${order.customer.parentName}">홍길동</td>
+                        <td th:text="${order.customer.childName}">홍아들</td>
+                        <td th:text="${order.product.modelName}">iPad Pro</td>
+                        <td th:text="${order.quantity}">1</td>
+                        <td class="amount" th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')} + '원'">100,000원</td>
+                        <td>
+                            <span th:class="'status status-' + ${order.status.name().toLowerCase()}"
+                                  th:text="${order.status == T(com.example.demo.order.Order.OrderStatus).PENDING ? '대기중' : 
+                                           order.status == T(com.example.demo.order.Order.OrderStatus).CONFIRMED ? '확정' : '취소'}">
+                                대기중
+                            </span>
+                        </td>
+                        <td th:text="${#temporals.format(order.createdAt, 'yyyy-MM-dd HH:mm')}">2024-01-01 10:00</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div th:if="${orders == null or orders.empty}" class="empty-message">
+            <i>📋</i>
+            <h3>등록된 주문이 없습니다</h3>
+            <p>새 주문 등록 버튼을 클릭하여 첫 번째 주문을 등록해보세요.</p>
+            <a href="/order/step1" class="btn btn-primary">새 주문 등록</a>
+        </div>
+    </div>
+</body>
+</html>
